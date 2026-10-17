@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">StudTool</string>
+    <string name="welcome_title">Welcome</string>
+    <string name="welcome_subtitle">Academic student paper generator</string>
+    <string name="welcome_bonus_title">REGISTRATION BONUS</string>
+    <string name="welcome_bonus_desc">+200 S-coin to your balance on account creation</string>
+    <string name="register_create">Create account</string>
+    <string name="login_title">Sign in</string>
+    <string name="login_button">Sign in</string>
+    <string name="forgot_password">Forgot password?</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">OVERVIEW</string>
+    <string name="nav_generator">CREATE</string>
+    <string name="nav_history">ARCHIVE</string>
+    <string name="nav_profile">PROFILE</string>
+
+    <!-- Profile -->
+    <string name="profile_title">Profile</string>
+    <string name="profile_balance_label">S-COIN BALANCE</string>
+    <string name="profile_deposit">Top up S-coin</string>
+    <string name="profile_edit">Edit profile</string>
+    <string name="profile_security">Security</string>
+    <string name="profile_change_password">Change password</string>
+    <string name="profile_settings">Settings</string>
+    <string name="profile_requests">My requests</string>
+    <string name="profile_tutorial">Tutorial</string>
+    <string name="profile_about">About app</string>
+    <string name="profile_logout">Log out</string>
+
+    <!-- Deposit and Payment -->
+    <string name="deposit_title">Top up S-coin</string>
+    <string name="deposit_min_amount">Minimum amount: 500 ₽</string>
+    <string name="deposit_card_copied">Card number copied</string>
+    <string name="deposit_open_sber">Open Sberbank</string>
+    <string name="deposit_paid_button">I have paid</string>
+    <string name="deposit_wait">Coins will arrive within 10 minutes after verification</string>
+    <string name="promocode_placeholder">Promo code (optional)</string>
+    <string name="promocode_applied">Promo code applied: %1$d%% discount</string>
+
+    <!-- Security -->
+    <string name="security_pin">PIN code for login</string>
+    <string name="security_biometric">Biometrics (fingerprint)</string>
+    <string name="pin_enter_title">Enter PIN code</string>
+    <string name="pin_wrong">Incorrect PIN code</string>
+    <string name="pin_fallback_password">Sign in with email and password</string>
+
+    <!-- Prices -->
+    <string name="price_referat">Report · %1$d SC</string>
+    <string name="price_doklad">Presentation · %1$d SC</string>
+    <string name="price_kursovaya">Term paper · %1$d SC</string>
+    <string name="price_esse">Essay · %1$d SC</string>
+    <string name="price_kontrolnaya">Control test · %1$d SC</string>
+</resources>

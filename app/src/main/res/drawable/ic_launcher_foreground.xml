@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="22"
+        android:translateY="22">
+        <!-- Document Page Base (White/Ivory) -->
+        <path
+            android:fillColor="#F8FAFC"
+            android:pathData="M14,6 C11.8,6 10,7.8 10,10 L10,54 C10,56.2 11.8,58 14,58 L50,58 C52.2,58 54,56.2 54,54 L54,20 L40,6 L14,6 Z" />
+        <!-- Corner Fold -->
+        <path
+            android:fillColor="#CBD5E1"
+            android:pathData="M40,6 L54,20 L40,20 Z" />
+        <!-- Academic Document Text Lines -->
+        <path
+            android:fillColor="#94A3B8"
+            android:pathData="M18,28 L36,28 L36,30 L18,30 Z" />
+        <path
+            android:fillColor="#94A3B8"
+            android:pathData="M18,34 L46,34 L46,36 L18,36 Z" />
+        <path
+            android:fillColor="#94A3B8"
+            android:pathData="M18,40 L46,40 L46,42 L18,42 Z" />
+        <path
+            android:fillColor="#94A3B8"
+            android:pathData="M18,46 L38,46 L38,48 L18,48 Z" />
+        <!-- Graduation Cap (Amber Gold Accent) -->
+        <path
+            android:fillColor="#F59E0B"
+            android:pathData="M32,10 L18,17 L32,24 L46,17 Z" />
+        <path
+            android:fillColor="#D97706"
+            android:pathData="M23,20.5 L23,26 C23,29 27,31 32,31 C37,31 41,29 41,26 L41,20.5 L32,25 Z" />
+        <!-- Tassel -->
+        <path
+            android:fillColor="#EA580C"
+            android:pathData="M44,18 L46,19 L46,27 L44,27 Z" />
+    </group>
+</vector>

@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">StudTool</string>
+    <string name="welcome_title">Добро пожаловать</string>
+    <string name="welcome_subtitle">Генератор академических студенческих работ по ГОСТ</string>
+    <string name="welcome_bonus_title">БОНУС ПРИ РЕГИСТРАЦИИ</string>
+    <string name="welcome_bonus_desc">+200 S-coin на баланс при создании аккаунта</string>
+    <string name="register_create">Создать аккаунт</string>
+    <string name="login_title">Вход в аккаунт</string>
+    <string name="login_button">Войти</string>
+    <string name="forgot_password">Забыли пароль?</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_home">ГЛАВНАЯ</string>
+    <string name="nav_generator">СОЗДАТЬ</string>
+    <string name="nav_history">ИСТОРИЯ</string>
+    <string name="nav_profile">НАСТРОЙКИ</string>
+
+    <!-- Profile & Settings -->
+    <string name="profile_title">Настройки и профиль</string>
+    <string name="profile_balance_label">БАЛАНС S-COIN</string>
+    <string name="profile_deposit">Пополнить S-coin</string>
+    <string name="profile_edit">Редактировать профиль</string>
+    <string name="profile_security">Безопасность (PIN и биометрия)</string>
+    <string name="profile_change_password">Сменить пароль</string>
+    <string name="profile_settings">Настройки LLM и приложения</string>
+    <string name="profile_requests">Мои запросы на пополнение</string>
+    <string name="profile_tutorial">Тур по приложению</string>
+    <string name="profile_about">О приложении</string>
+    <string name="profile_logout">Выйти из аккаунта</string>
+
+    <!-- Deposit and Payment -->
+    <string name="deposit_title">Пополнение S-coin</string>
+    <string name="deposit_min_amount">Минимальная сумма: 500 ₽</string>
+    <string name="deposit_card_copied">Номер карты скопирован</string>
+    <string name="deposit_open_sber">Открыть Сбербанк</string>
+    <string name="deposit_paid_button">Я оплатил</string>
+    <string name="deposit_wait">Коины придут в течение 10 минут после проверки</string>
+    <string name="promocode_placeholder">Промокод (необязательно)</string>
+    <string name="promocode_applied">Промокод применён: скидка %1$d%%</string>
+
+    <!-- Security -->
+    <string name="security_pin">PIN-код для входа</string>
+    <string name="security_biometric">Биометрия (отпечаток пальца)</string>
+    <string name="pin_enter_title">Введите PIN-код</string>
+    <string name="pin_wrong">Неверный PIN-код</string>
+    <string name="pin_fallback_password">Войти по email и паролю</string>
+
+    <!-- Prices -->
+    <string name="price_referat">Реферат · %1$d SC</string>
+    <string name="price_doklad">Доклад · %1$d SC</string>
+    <string name="price_kursovaya">Курсовая · %1$d SC</string>
+    <string name="price_esse">Эссе · %1$d SC</string>
+    <string name="price_kontrolnaya">Контрольная · %1$d SC</string>
+</resources>

@@ -1,0 +1,6 @@
+{
+  "name": "StudTool",
+  "description": "Генератор академических студенческих работ по ГОСТу с последовательным квантованным пайплайном генерации и экспортом в DOCX.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
