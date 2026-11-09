@@ -5,7 +5,7 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:  # позволяет запускать вручную
+  workflow_dispatch:
 
 jobs:
   build:
@@ -21,14 +21,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+      # Если файла gradlew нет, генерируем его через системный gradle
+      - name: Ensure gradlew exists
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "gradlew не найден, генерируем..."
+            # Устанавливаем Gradle через официальный action, чтобы сгенерировать wrapper
+            gradle wrapper --gradle-version 8.7
+          else
+            echo "gradlew найден"
+          fi
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
+        run: ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
