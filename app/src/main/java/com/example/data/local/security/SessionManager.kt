@@ -27,28 +27,31 @@ class SessionManager(context: Context) {
         return prefs.getString(KEY_USER_EMAIL, "student@university.ru") ?: "student@university.ru"
     }
 
+    fun getEmail(): String = getUserEmail()
+
     fun saveUserEmail(email: String) {
         prefs.edit().putString(KEY_USER_EMAIL, email).apply()
     }
 
     fun getUserName(): String {
-        return prefs.getString(KEY_USER_NAME, "Али Абдулаев") ?: "Али Абдулаев"
+        return prefs.getString(KEY_USER_NAME, "Иван Иванов") ?: "Иван Иванов"
     }
 
     fun saveUserName(name: String) {
         prefs.edit().putString(KEY_USER_NAME, name).apply()
     }
 
-    fun getUserUniversity(): String {
-        return prefs.getString(KEY_USER_UNIVERSITY, "МГТУ им. Н.Э. Баумана") ?: "МГТУ им. Н.Э. Баумана"
+    fun savePushToken(token: String) {
+        prefs.edit().putString(KEY_PUSH_TOKEN, token).apply()
     }
 
-    fun saveUserUniversity(university: String) {
-        prefs.edit().putString(KEY_USER_UNIVERSITY, university).apply()
+    fun getPushToken(): String? {
+        return prefs.getString(KEY_PUSH_TOKEN, null)
     }
 
+    // Legacy coin helpers (hidden from UI, kept only for internal repo compatibility)
     fun getCoinBalance(): Int {
-        return prefs.getInt(KEY_COIN_BALANCE, 1500)
+        return prefs.getInt(KEY_COIN_BALANCE, 0)
     }
 
     fun saveCoinBalance(coins: Int) {
@@ -68,20 +71,63 @@ class SessionManager(context: Context) {
         saveCoinBalance(getCoinBalance() + amount)
     }
 
+    // Subscription state (Stage 2)
+    fun isSubscriptionActive(): Boolean {
+        return prefs.getBoolean(KEY_SUB_ACTIVE, true)
+    }
+
+    fun setSubscriptionActive(active: Boolean) {
+        prefs.edit().putBoolean(KEY_SUB_ACTIVE, active).apply()
+    }
+
+    fun hasHadSubscription(): Boolean {
+        return prefs.getBoolean(KEY_HAS_HAD_SUB, false)
+    }
+
+    fun setHasHadSubscription(hasHad: Boolean) {
+        prefs.edit().putBoolean(KEY_HAS_HAD_SUB, hasHad).apply()
+    }
+
+    fun getSubscriptionPlanType(): String? {
+        return prefs.getString(KEY_SUB_PLAN_TYPE, "month")
+    }
+
+    fun getSubscriptionExpiresAt(): String {
+        return prefs.getString(KEY_SUB_EXPIRES_AT, "31.12.2026") ?: "31.12.2026"
+    }
+
+    fun getSubscriptionDaysLeft(): Int {
+        return prefs.getInt(KEY_SUB_DAYS_LEFT, 45)
+    }
+
+    fun isSubscriptionAutoRenew(): Boolean {
+        return prefs.getBoolean(KEY_SUB_AUTO_RENEW, true)
+    }
+
+    fun saveSubscriptionState(
+        active: Boolean,
+        hasHadSubscription: Boolean,
+        planType: String?,
+        expiresAt: String,
+        daysLeft: Int,
+        autoRenew: Boolean = true
+    ) {
+        prefs.edit()
+            .putBoolean(KEY_SUB_ACTIVE, active)
+            .putBoolean(KEY_HAS_HAD_SUB, hasHadSubscription)
+            .putString(KEY_SUB_PLAN_TYPE, planType ?: "month")
+            .putString(KEY_SUB_EXPIRES_AT, expiresAt)
+            .putInt(KEY_SUB_DAYS_LEFT, daysLeft)
+            .putBoolean(KEY_SUB_AUTO_RENEW, autoRenew)
+            .apply()
+    }
+
     fun isLoggedIn(): Boolean {
         return getUserId() > 0
     }
 
     fun logout() {
-        val seenTour = hasSeenTour()
-        val theme = getThemeMode()
-        val lang = getAppLanguage()
-        prefs.edit().clear()
-            .putBoolean(KEY_HAS_SEEN_TOUR, seenTour)
-            .putString(KEY_THEME_MODE, theme)
-            .putString(KEY_APP_LANGUAGE, lang)
-            .putLong(KEY_USER_ID, 0L)
-            .apply()
+        prefs.edit().clear().apply()
     }
 
     fun saveLlmSettings(settings: LlmSettings) {
@@ -89,46 +135,21 @@ class SessionManager(context: Context) {
             .putString(KEY_ENDPOINT, settings.endpoint)
             .putString(KEY_API_KEY, settings.apiKey)
             .putString(KEY_MODEL, settings.model)
-            .putLong(KEY_TIMEOUT, settings.timeout)
-            .putFloat(KEY_TEMPERATURE, settings.temperature.toFloat())
-            .putFloat(KEY_TOP_P, settings.topP.toFloat())
+            .putLong(KEY_TIMEOUT, settings.timeout.coerceIn(10L, 300L))
             .apply()
     }
 
+    fun loadLlmSettings(): LlmSettings = getLlmSettings()
+
     fun getLlmSettings(): LlmSettings {
+        val model = prefs.getString(KEY_MODEL, "vibe-code-pro-flash") ?: "vibe-code-pro-flash"
+        val defaultTimeout = if (listOf("flash", "mini", "fast", "haiku", "nano").any { model.lowercase().contains(it) }) 90L else 180L
         return LlmSettings(
-            endpoint = prefs.getString(KEY_ENDPOINT, "https://api.vibecode.online/v1/chat/completions")
-                ?: "https://api.vibecode.online/v1/chat/completions",
+            endpoint = prefs.getString(KEY_ENDPOINT, "https://api.vibecode.online/v1") ?: "https://api.vibecode.online/v1",
             apiKey = prefs.getString(KEY_API_KEY, "") ?: "",
-            model = prefs.getString(KEY_MODEL, "vibe-code-pro-flash") ?: "vibe-code-pro-flash",
-            timeout = prefs.getLong(KEY_TIMEOUT, 90L),
-            temperature = prefs.getFloat(KEY_TEMPERATURE, 0.65f).toDouble(),
-            topP = prefs.getFloat(KEY_TOP_P, 0.95f).toDouble()
+            model = model,
+            timeout = prefs.getLong(KEY_TIMEOUT, defaultTimeout).coerceIn(10L, 300L)
         )
-    }
-
-    fun getThemeMode(): String {
-        return prefs.getString(KEY_THEME_MODE, "SYSTEM") ?: "SYSTEM"
-    }
-
-    fun saveThemeMode(mode: String) {
-        prefs.edit().putString(KEY_THEME_MODE, mode).apply()
-    }
-
-    fun getAppLanguage(): String {
-        return prefs.getString(KEY_APP_LANGUAGE, "ru") ?: "ru"
-    }
-
-    fun saveAppLanguage(language: String) {
-        prefs.edit().putString(KEY_APP_LANGUAGE, language).apply()
-    }
-
-    fun hasSeenTour(): Boolean {
-        return prefs.getBoolean(KEY_HAS_SEEN_TOUR, false)
-    }
-
-    fun setHasSeenTour(seen: Boolean) {
-        prefs.edit().putBoolean(KEY_HAS_SEEN_TOUR, seen).apply()
     }
 
     companion object {
@@ -136,16 +157,17 @@ class SessionManager(context: Context) {
         private const val KEY_AUTH_TOKEN = "auth_token"
         private const val KEY_USER_EMAIL = "user_email"
         private const val KEY_USER_NAME = "user_name"
-        private const val KEY_USER_UNIVERSITY = "user_university"
+        private const val KEY_PUSH_TOKEN = "push_token"
         private const val KEY_COIN_BALANCE = "coin_balance"
+        private const val KEY_SUB_ACTIVE = "subscription_active"
+        private const val KEY_HAS_HAD_SUB = "has_had_subscription"
+        private const val KEY_SUB_PLAN_TYPE = "subscription_plan_type"
+        private const val KEY_SUB_EXPIRES_AT = "subscription_expires_at"
+        private const val KEY_SUB_DAYS_LEFT = "subscription_days_left"
+        private const val KEY_SUB_AUTO_RENEW = "subscription_auto_renew"
         private const val KEY_ENDPOINT = "llm_endpoint"
         private const val KEY_API_KEY = "llm_api_key"
         private const val KEY_MODEL = "llm_model"
         private const val KEY_TIMEOUT = "llm_timeout"
-        private const val KEY_TEMPERATURE = "llm_temperature"
-        private const val KEY_TOP_P = "llm_top_p"
-        private const val KEY_THEME_MODE = "app_theme_mode"
-        private const val KEY_APP_LANGUAGE = "app_language"
-        private const val KEY_HAS_SEEN_TOUR = "has_seen_tour"
     }
 }

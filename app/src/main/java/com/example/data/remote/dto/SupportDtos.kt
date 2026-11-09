@@ -29,19 +29,18 @@ data class MySupportTicketsRequest(
 @JsonClass(generateAdapter = true)
 data class SupportTicketDto(
     @Json(name = "id") val id: Long,
-    @Json(name = "user_id") val userId: Long,
+    @Json(name = "user_id") val userId: Long = 0L,
     @Json(name = "category") val category: String,
-    @Json(name = "subject") val subject: String,
+    @Json(name = "subject") val subject: String = "",
     @Json(name = "message") val message: String,
+    @Json(name = "work_id") val workId: Int? = null,
     @Json(name = "status") val status: String, // open, in_progress, resolved, rejected
     @Json(name = "admin_reply") val adminReply: String? = null,
     @Json(name = "refunded_amount") val refundedAmount: Int? = null,
+    @Json(name = "refund_eskoins") val refundEskoins: Int = refundedAmount ?: 0,
     @Json(name = "created_at") val createdAt: String,
-    @Json(name = "work_id") val workId: Long? = null,
     @Json(name = "processed_at") val processedAt: String? = null
-) {
-    val refundEskoins: Int get() = refundedAmount ?: 0
-}
+)
 
 @JsonClass(generateAdapter = true)
 data class MySupportTicketsResponse(

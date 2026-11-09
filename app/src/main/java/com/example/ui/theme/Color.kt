@@ -1,45 +1,35 @@
 package com.example.ui.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 
-// StudTool Editorial Academic Palette (Warm Ivory / Deep Navy Slate / Amber Gold / Academic Indigo)
-val StudNavyDark = Color(0xFF0F172A)
-val StudNavySurface = Color(0xFF1E293B)
-val StudNavyElevated = Color(0xFF26334D)
+val Ink = Color(0xFF0A0A0A)
+val InkSoft = Color(0xFF2E2D2A)
+val InkFaint = Color(0xFF6E6B64)
+val Paper = Color(0xFFF0EDE6)
+val PaperWarm = Color(0xFFE6E1D6)
+val Line = Color(0xFFD4CFC4)
+val LineStrong = Color(0xFF0A0A0A)
+val Accent = Color(0xFFC8451F)
+val Good = Color(0xFF1E6B47)
 
-val StudPaperLight = Color(0xFFFAF8F5)
-val StudSurfaceLight = Color(0xFFFFFFFF)
-val StudSurfaceVariantLight = Color(0xFFF1EFEA)
+// Legacy M3 template colors kept for compatibility
+val Purple80 = Color(0xFFD0BCFF)
+val PurpleGrey80 = Color(0xFFCCC2DC)
+val Pink80 = Color(0xFFEFB8C8)
+val Purple40 = Color(0xFFC8451F)
+val PurpleGrey40 = Color(0xFF2E2D2A)
+val Pink40 = Color(0xFF1E6B47)
 
-val StudPrimaryBlue = Color(0xFF1E3A8A)
-val StudPrimaryBlueLight = Color(0xFF3B82F6)
-val StudPrimaryContainerLight = Color(0xFFDBEAFE)
-val StudOnPrimaryContainerLight = Color(0xFF1E3A8A)
-
-val StudAmberGold = Color(0xFFF59E0B)
-val StudAmberDark = Color(0xFFD97706)
-val StudAmberDeep = Color(0xFF92400E)
-val StudAmberSoftBg = Color(0xFFFEF3C7)
-
-val StudEmerald = Color(0xFF10B981)
-val StudEmeraldDark = Color(0xFF059669)
-val StudCrimson = Color(0xFFEF4444)
-
-val StudTextPrimaryLight = Color(0xFF0F172A)
-val StudTextSecondaryLight = Color(0xFF475569)
-val StudTextMutedLight = Color(0xFF64748B)
-val StudBorderLight = Color(0xFFE2E8F0)
-
-val StudTextPrimaryDark = Color(0xFFF8FAFC)
-val StudTextSecondaryDark = Color(0xFFCBD5E1)
-val StudTextMutedDark = Color(0xFF94A3B8)
-val StudBorderDark = Color(0xFF334155)
-
-// Backwards-compatible aliases
-val Purple80 = StudPrimaryBlueLight
-val PurpleGrey80 = StudTextSecondaryDark
-val Pink80 = StudAmberGold
-
-val Purple40 = StudPrimaryBlue
-val PurpleGrey40 = StudTextSecondaryLight
-val Pink40 = StudAmberDark
+@Immutable
+data class StudToolColors(
+    val ink: Color = Ink,
+    val inkSoft: Color = InkSoft,
+    val inkFaint: Color = InkFaint,
+    val paper: Color = Paper,
+    val paperWarm: Color = PaperWarm,
+    val line: Color = Line,
+    val lineStrong: Color = LineStrong,
+    val accent: Color = Accent,
+    val good: Color = Good
+)

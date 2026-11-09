@@ -1,5 +1,6 @@
 package com.example.data.remote
 
+import com.example.data.remote.llm.VibeCodeApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -27,23 +28,18 @@ class LlmConnectionChecker(
         apiKey: String,
         model: String
     ): CheckResult = withContext(Dispatchers.IO) {
-        val cleanEndpoint = endpoint.trim().removeSuffix("/")
+        val cleanEndpoint = VibeCodeApiClient.normalizeEndpoint(endpoint)
         if (cleanEndpoint.isBlank()) {
             return@withContext CheckResult.Error("URL эндпоинта не может быть пустым")
         }
 
-        // Тестируем через лёгкий запрос models или chat/completions с max_tokens=1
-        val testUrl = if (cleanEndpoint.endsWith("/chat/completions")) {
-            cleanEndpoint
-        } else {
-            "$cleanEndpoint/chat/completions"
-        }
+        val testUrl = VibeCodeApiClient.buildChatCompletionsUrl(cleanEndpoint)
 
         val jsonPayload = """
             {
                "model": "$model",
                "messages": [{"role": "user", "content": "ping"}],
-               "max_tokens": 1
+               "max_tokens": 5
             }
         """.trimIndent()
 
@@ -58,25 +54,11 @@ class LlmConnectionChecker(
         try {
             client.newCall(requestBuilder.build()).execute().use { response ->
                 when (response.code) {
-                    200 -> {
-                        CheckResult.Success("Успешное подключение! Модель ответила 200 OK.")
-                    }
-                    401 -> {
-                        CheckResult.Error("Ошибка 401 Unauthorized: Неверный API-ключ", 401)
-                    }
-                    403 -> {
-                        CheckResult.Error("Ошибка 403 Forbidden: Доступ запрещён или нет прав к модели", 403)
-                    }
-                    404 -> {
-                        // Попробуем альтернативно проверить /models
-                        checkModelsEndpoint(cleanEndpoint, apiKey)
-                    }
-                    429 -> {
-                        CheckResult.Error("Ошибка 429 Rate Limit: Превышен лимит запросов или баланс исчерпан", 429)
-                    }
+                    200 -> CheckResult.Success("Успешное подключение! Модель ответила 200 OK.")
+                    404 -> checkModelsEndpoint(cleanEndpoint, apiKey)
                     else -> {
-                        val body = response.body?.string()?.take(200) ?: ""
-                        CheckResult.Error("Ответ сервера HTTP ${response.code}: $body", response.code)
+                        val mapped = VibeCodeApiClient.mapHttpError(response.code, response.message)
+                        CheckResult.Error(mapped, response.code)
                     }
                 }
             }
@@ -96,7 +78,7 @@ class LlmConnectionChecker(
                 if (resp.isSuccessful) {
                     CheckResult.Success("Эндпоинт доступен! Сервер вернул список моделей.")
                 } else {
-                    CheckResult.Error("Сервер вернул HTTP ${resp.code} на $modelsUrl", resp.code)
+                    CheckResult.Error(VibeCodeApiClient.mapHttpError(resp.code, resp.message), resp.code)
                 }
             }
         } catch (e: Exception) {

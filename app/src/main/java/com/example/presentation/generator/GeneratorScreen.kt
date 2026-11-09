@@ -1,11 +1,9 @@
 package com.example.presentation.generator
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,15 +21,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.School
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -40,7 +37,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -52,6 +48,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -71,47 +68,97 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.core.utils.FileSharingHelper
+import androidx.core.content.FileProvider
 import com.example.domain.model.GenerationProgress
 import com.example.domain.model.GenerationStage
-import com.example.domain.model.UniversityProfile
-import com.example.domain.model.WorkDocument
 import com.example.domain.model.WorkSection
 import com.example.domain.model.WorkType
-import com.example.ui.components.AnimatedCoinBadge
-import com.example.ui.components.StudToolBrandHeader
-import com.example.ui.theme.FrauncesFontFamily
-import com.example.ui.theme.JetBrainsMonoFontFamily
-import com.example.ui.theme.StudAmberDark
-import com.example.ui.theme.StudAmberGold
-import com.example.ui.theme.StudEmerald
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GeneratorScreen(
     viewModel: GeneratorViewModel,
-    coinBalance: Int = 1500,
-    onNavigateToCoins: () -> Unit = {},
-    onPreviewWork: (WorkDocument) -> Unit = {},
+    onNavigateToSubscription: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     var showSettingsDialog by remember { mutableStateOf(false) }
-    var showTitlePageDetails by remember { mutableStateOf(false) }
+
+    // 2.6. Диалог «Нужна подписка»
+    if (uiState.showSubscriptionDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissSubscriptionDialog() },
+            title = {
+                Text(
+                    text = "Нужна подписка",
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Text("Нужна активная подписка. Оформите в Профиле → Подписка")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.dismissSubscriptionDialog()
+                        onNavigateToSubscription()
+                    },
+                    modifier = Modifier.testTag("dialog_btn_subscribe")
+                ) {
+                    Text("Оформить")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { viewModel.dismissSubscriptionDialog() },
+                    modifier = Modifier.testTag("dialog_btn_cancel")
+                ) {
+                    Text("Отмена")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    StudToolBrandHeader(badgeText = "ГОСТ 7.32")
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "StudTool",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
+                                )
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "ГОСТ 7.32",
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                        }
+                        Text(
+                            text = "Последовательный квантованный пайплайн LLM",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 11.sp
+                            )
+                        )
+                    }
                 },
                 actions = {
-                    AnimatedCoinBadge(
-                        balance = coinBalance,
-                        onClick = onNavigateToCoins,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
                     IconButton(
                         onClick = { showSettingsDialog = !showSettingsDialog },
                         modifier = Modifier.testTag("btn_settings")
@@ -148,27 +195,111 @@ fun GeneratorScreen(
                 )
             }
 
-            // Ошибка если есть
-            if (uiState.error != null) {
+            // 4.5. Баннер продолжения прерванной генерации из Room GenerationSession
+            if (uiState.savedSession != null && !uiState.isGenerating && uiState.error == null) {
+                val saved = uiState.savedSession!!
+                val nextStage = (saved.currentStage + 1).coerceAtMost(saved.totalStages)
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 14.dp)
+                        .testTag("saved_session_banner")
                 ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
                         Text(
-                            text = "Ошибка: ${uiState.error}",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = MaterialTheme.colorScheme.onErrorContainer
-                            ),
-                            modifier = Modifier.weight(1f)
+                            text = "Найдена незавершённая генерация",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
                         )
-                        IconButton(onClick = { viewModel.clearError() }) {
-                            Text("✕", color = MaterialTheme.colorScheme.onErrorContainer)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Сохранено этапов: ${saved.currentStage} из ${saved.totalStages}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = {
+                                    viewModel.startGeneration(
+                                        startFromStage = nextStage,
+                                        resumeSessionId = saved.id
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = null)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("Продолжить с этапа $nextStage")
+                            }
+                            OutlinedButton(onClick = { viewModel.dismissSavedSession() }) {
+                                Text("Сбросить")
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 5.2. Блок ошибки на этапе генерации с 3 кнопками
+            if (uiState.error != null) {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 14.dp)
+                        .testTag("stage_error_card")
+                ) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.ErrorOutline,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = uiState.error!!,
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = { viewModel.retryFromFailedStage() },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("btn_retry_from_stage")
+                            ) {
+                                Text("Повторить с этого этапа", fontSize = 12.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { showSettingsDialog = true },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("btn_open_api_settings")
+                            ) {
+                                Text("Открыть настройки API", fontSize = 12.sp)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        TextButton(
+                            onClick = { viewModel.clearError() },
+                            modifier = Modifier
+                                .align(Alignment.End)
+                                .testTag("btn_cancel_error")
+                        ) {
+                            Text("Отмена", color = MaterialTheme.colorScheme.onErrorContainer)
                         }
                     }
                 }
@@ -178,7 +309,6 @@ fun GeneratorScreen(
             Text(
                 text = "ТЕМА НАУЧНО-ИССЛЕДОВАТЕЛЬСКОЙ РАБОТЫ",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = JetBrainsMonoFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,
                     letterSpacing = 1.sp
@@ -198,40 +328,18 @@ fun GeneratorScreen(
                 textStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 2. ВЫБОР ТИПА РАБОТЫ
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "ТИП АКАДЕМИЧЕСКОЙ РАБОТЫ",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 1.sp
-                    )
-                )
-                Surface(
-                    color = StudAmberGold.copy(alpha = 0.16f),
-                    shape = RoundedCornerShape(6.dp)
-                ) {
-                    Text(
-                        text = "Тариф: ${uiState.workType.priceSc} S-coin",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            color = StudAmberDark
-                        ),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "ТИП АКАДЕМИЧЕСКОЙ РАБОТЫ",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    letterSpacing = 1.sp
+                ),
+                modifier = Modifier.padding(bottom = 6.dp)
+            )
 
             WorkTypeDropdown(
                 selectedType = uiState.workType,
@@ -239,181 +347,7 @@ fun GeneratorScreen(
                 enabled = !uiState.isGenerating
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 2.5 ПРОФИЛЬ ВУЗА И ТИТУЛЬНЫЙ ЛИСТ ГОСТ
-            Card(
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                ),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateContentSize()
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showTitlePageDetails = !showTitlePageDetails },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            Icon(
-                                imageVector = Icons.Default.School,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Column {
-                                Text(
-                                    text = "Профиль ВУЗа и титульный лист ГОСТ",
-                                    style = MaterialTheme.typography.titleSmall.copy(
-                                        fontFamily = FrauncesFontFamily,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                                Text(
-                                    text = "${uiState.university} · ${uiState.authorName}",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        fontSize = 11.sp
-                                    ),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                        Icon(
-                            imageVector = if (showTitlePageDetails) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                            contentDescription = "Развернуть"
-                        )
-                    }
-
-                    if (showTitlePageDetails) {
-                        Spacer(modifier = Modifier.height(10.dp))
-
-                        val uniPresets = remember {
-                            listOf(
-                                UniversityProfile(
-                                    id = "bmstu",
-                                    fullName = "Московский государственный технический университет им. Н.Э. Баумана",
-                                    shortName = "МГТУ им. Баумана",
-                                    faculty = "Информатика и системы управления",
-                                    department = "Программная инженерия и ИИ",
-                                    city = "Москва"
-                                ),
-                                UniversityProfile(
-                                    id = "msu",
-                                    fullName = "Московский государственный университет имени М.В. Ломоносова",
-                                    shortName = "МГУ",
-                                    faculty = "Факультет ВМК",
-                                    department = "Системное программирование",
-                                    city = "Москва"
-                                ),
-                                UniversityProfile(
-                                    id = "hse",
-                                    fullName = "Национальный исследовательский университет «Высшая школа экономики»",
-                                    shortName = "НИУ ВШЭ",
-                                    faculty = "Факультет компьютерных наук",
-                                    department = "Анализ данных и ИИ",
-                                    city = "Москва"
-                                ),
-                                UniversityProfile(
-                                    id = "spbu",
-                                    fullName = "Санкт-Петербургский государственный университет",
-                                    shortName = "СПбГУ",
-                                    faculty = "Математико-механический факультет",
-                                    department = "Информационные системы",
-                                    city = "Санкт-Петербург"
-                                ),
-                                UniversityProfile(
-                                    id = "gpk",
-                                    fullName = "Гуманитарно-педагогический колледж",
-                                    shortName = "ГПК",
-                                    faculty = "Отделение информационных технологий",
-                                    department = "Предметно-цикловая комиссия",
-                                    city = "Махачкала"
-                                )
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState()),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            uniPresets.forEach { preset ->
-                                FilterChip(
-                                    selected = uiState.university == preset.shortName || uiState.university == preset.fullName,
-                                    onClick = { viewModel.applyUniversityProfile(preset) },
-                                    label = { Text(preset.shortName) }
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        OutlinedTextField(
-                            value = uiState.university,
-                            onValueChange = { viewModel.setUniversity(it) },
-                            label = { Text("Учебное заведение (ВУЗ / Колледж)") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = uiState.faculty,
-                            onValueChange = { viewModel.setFaculty(it) },
-                            label = { Text("Факультет / Институт") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = uiState.department,
-                            onValueChange = { viewModel.setDepartment(it) },
-                            label = { Text("Кафедра и направление") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = uiState.authorName,
-                                onValueChange = { viewModel.setAuthorName(it) },
-                                label = { Text("ФИО студента") },
-                                singleLine = true,
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = uiState.city,
-                                onValueChange = { viewModel.setCity(it) },
-                                label = { Text("Город") },
-                                singleLine = true,
-                                modifier = Modifier.weight(0.75f)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(6.dp))
-                        OutlinedTextField(
-                            value = uiState.supervisorName,
-                            onValueChange = { viewModel.setSupervisorName(it) },
-                            label = { Text("Научный руководитель") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // 3. СЛАЙДЕР СТРАНИЦ И ШАГ 1: КВАНТОВАНИЕ ОБЪЕМА
             QuantizationConfigCard(
@@ -433,12 +367,12 @@ fun GeneratorScreen(
                 enabled = !uiState.isGenerating && uiState.topic.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp)
+                    .height(52.dp)
                     .testTag("btn_start_generation"),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary
                 ),
-                shape = RoundedCornerShape(10.dp)
+                shape = RoundedCornerShape(8.dp)
             ) {
                 if (uiState.isGenerating) {
                     CircularProgressIndicator(
@@ -448,7 +382,7 @@ fun GeneratorScreen(
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Итеративная генерация (${uiState.progress.overallPercentage}%)...",
+                        text = "Генерация (${uiState.progress.overallPercentage}%)...",
                         fontWeight = FontWeight.Bold
                     )
                 } else {
@@ -462,10 +396,15 @@ fun GeneratorScreen(
                 }
             }
 
-            // 5. КАРТОЧКА ПРОГРЕССА (ШАГ 2 И ШАГ 3 В РЕАЛЬНОМ ВРЕМЕНИ)
+            // 5.1. КАРТОЧКА ПРОГРЕССА (ЭТАП 5: ПРОГРЕСС ГЕНЕРАЦИИ В UI)
             if (uiState.isGenerating || uiState.progress.stage !is GenerationStage.Idle) {
                 Spacer(modifier = Modifier.height(18.dp))
-                GenerationProgressCard(progress = uiState.progress)
+                GenerationProgressCard(
+                    progress = uiState.progress,
+                    checklist = uiState.stageChecklist,
+                    isGenerating = uiState.isGenerating,
+                    onCancel = { viewModel.cancelGeneration() }
+                )
             }
 
             // 6. ГОТОВЫЙ ДОКУМЕНТ И ЭКСПОРТ В .DOCX
@@ -474,12 +413,8 @@ fun GeneratorScreen(
                 DocumentResultCard(
                     document = uiState.currentDocument!!,
                     docxPath = uiState.docxFilePath,
-                    onPreviewWork = { onPreviewWork(uiState.currentDocument!!) },
                     onOpenDocx = { path ->
-                        FileSharingHelper.openDocx(context, path)
-                    },
-                    onShareDocx = { path ->
-                        FileSharingHelper.shareDocx(context, path, uiState.currentDocument!!.meta.topic)
+                        openDocxFile(context, path)
                     },
                     onRecompileDocx = {
                         viewModel.compileDocx()
@@ -503,7 +438,7 @@ private fun QuantizationConfigCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -515,7 +450,6 @@ private fun QuantizationConfigCard(
                 Text(
                     text = "ШАГ 1: КВАНТОВАНИЕ ОБЪЕМА (ГОСТ)",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = JetBrainsMonoFontFamily,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -528,7 +462,6 @@ private fun QuantizationConfigCard(
                     Text(
                         text = "$targetPages стр. (~${plan.totalTargetCharacters} знаков)",
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontFamily = JetBrainsMonoFontFamily,
                             color = MaterialTheme.colorScheme.onPrimary,
                             fontWeight = FontWeight.Bold
                         ),
@@ -543,7 +476,7 @@ private fun QuantizationConfigCard(
                 value = targetPages.toFloat(),
                 onValueChange = { onPagesChange(it.toInt()) },
                 valueRange = minPages.toFloat()..maxPages.toFloat(),
-                steps = maxOf(0, maxPages - minPages - 1),
+                steps = (maxPages - minPages - 1).coerceAtLeast(0),
                 enabled = enabled,
                 colors = SliderDefaults.colors(
                     thumbColor = MaterialTheme.colorScheme.primary,
@@ -552,12 +485,11 @@ private fun QuantizationConfigCard(
                 modifier = Modifier.testTag("slider_pages")
             )
 
-            // Быстрые пресеты страниц
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                listOf(12, 18, 25, 35, 45, 65, 80).filter { it in minPages..maxPages }.take(5).forEach { preset ->
+                listOf(25, 35, 40, 50, 65).filter { it in minPages..maxPages }.forEach { preset ->
                     Surface(
                         color = if (targetPages == preset) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         shape = RoundedCornerShape(4.dp),
@@ -568,54 +500,9 @@ private fun QuantizationConfigCard(
                         Text(
                             text = "$preset стр",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                fontFamily = JetBrainsMonoFontFamily,
                                 fontWeight = if (targetPages == preset) FontWeight.Bold else FontWeight.Normal
                             ),
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Таблица квантования разделов
-            Text(
-                text = "Математическое распределение объема по главам (~1800 зн./стр.):",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            plan.sections.forEach { section ->
-                if (section.targetCharacters > 0) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = section.title,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 11.sp,
-                                fontFamily = FontFamily.Monospace
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
-                        Text(
-                            text = "${section.targetPages} стр. (${section.targetCharacters} зн.)",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontSize = 11.sp,
-                                fontFamily = JetBrainsMonoFontFamily,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary
-                            )
                         )
                     }
                 }
@@ -625,49 +512,60 @@ private fun QuantizationConfigCard(
 }
 
 @Composable
-private fun GenerationProgressCard(progress: GenerationProgress) {
+private fun GenerationProgressCard(
+    progress: GenerationProgress,
+    checklist: List<StageCheckItem>,
+    isGenerating: Boolean,
+    onCancel: () -> Unit
+) {
+    val totalStages = checklist.size.coerceAtLeast(progress.totalSections).coerceAtLeast(1)
+    val currentStage = progress.currentSectionIndex.coerceIn(1, totalStages)
+    val stageTitle = progress.currentSectionTitle.ifBlank { "Введение" }
+
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         ),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier.fillMaxWidth()
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("generation_progress_card")
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            // Крупные цифры процента: (current / total) * 100
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Bottom
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Psychology,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
+                Column {
                     Text(
-                        text = "ШАГ 2 И 3: ИТЕРАТИВНЫЙ ПАЙПЛАЙН",
+                        text = "ПРОГРЕСС ГЕНЕРАЦИИ",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            fontFamily = JetBrainsMonoFontFamily,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.primary
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "$stageTitle · Этап $currentStage из $totalStages",
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold
                         )
                     )
                 }
 
                 Text(
                     text = "${progress.overallPercentage}%",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontFamily = JetBrainsMonoFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 42.sp
                     )
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             LinearProgressIndicator(
                 progress = { progress.overallPercentage / 100f },
@@ -677,60 +575,80 @@ private fun GenerationProgressCard(progress: GenerationProgress) {
                     .clip(RoundedCornerShape(4.dp))
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
+            // Список выполненных этапов с галочками
             Text(
-                text = progress.statusMessage,
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                text = "ЭТАПЫ РАБОТЫ:",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             )
+            Spacer(modifier = Modifier.height(6.dp))
 
-            if (progress.currentSectionTargetChars > 0) {
-                Spacer(modifier = Modifier.height(4.dp))
+            checklist.forEach { item ->
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = when {
+                                item.isDone -> Icons.Default.CheckCircle
+                                item.isError -> Icons.Default.ErrorOutline
+                                else -> Icons.Default.RadioButtonUnchecked
+                            },
+                            contentDescription = null,
+                            tint = when {
+                                item.isDone -> Color(0xFF1E6B47)
+                                item.isError -> MaterialTheme.colorScheme.error
+                                item.isCurrent -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            },
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "${item.index}. ${item.label}",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = if (item.isCurrent || item.isDone) FontWeight.Bold else FontWeight.Normal,
+                                color = if (item.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        )
+                    }
                     Text(
-                        text = "Текущий раздел: ${progress.currentSectionTitle}",
-                        style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp)
-                    )
-                    Text(
-                        text = "Квота: ${progress.currentSectionTargetChars} знаков",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 11.sp,
-                            fontFamily = JetBrainsMonoFontFamily,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                        text = when {
+                            item.isDone -> "✓"
+                            item.isError -> "Ошибка"
+                            item.isCurrent -> "В работе..."
+                            else -> "Ожидание"
+                        },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontFamily = FontFamily.Monospace,
+                            color = when {
+                                item.isDone -> Color(0xFF1E6B47)
+                                item.isError -> MaterialTheme.colorScheme.error
+                                item.isCurrent -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant
+                            }
                         )
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Surface(
-                color = MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            if (isGenerating) {
+                Spacer(modifier = Modifier.height(14.dp))
+                OutlinedButton(
+                    onClick = onCancel,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("btn_cancel_generation")
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Speed,
-                        contentDescription = null,
-                        tint = StudEmerald,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        text = "Summary Relay активен: передается строго 3 предложения резюме, исключая переполнение контекста (context window overflow).",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            fontSize = 10.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    )
+                    Text("Отменить")
                 }
             }
         }
@@ -739,16 +657,14 @@ private fun GenerationProgressCard(progress: GenerationProgress) {
 
 @Composable
 private fun DocumentResultCard(
-    document: WorkDocument,
+    document: com.example.domain.model.WorkDocument,
     docxPath: String?,
-    onPreviewWork: () -> Unit,
     onOpenDocx: (String) -> Unit,
-    onShareDocx: (String) -> Unit,
     onRecompileDocx: () -> Unit
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(10.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -757,17 +673,14 @@ private fun DocumentResultCard(
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = null,
-                    tint = StudEmerald,
+                    tint = Color(0xFF10B981),
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
                         text = "Работа успешно сформирована!",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontFamily = FrauncesFontFamily,
-                            fontWeight = FontWeight.Bold
-                        )
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
                         text = "Объем: ${document.meta.targetPages} стр. (${document.sections.size} разделов)",
@@ -778,41 +691,16 @@ private fun DocumentResultCard(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Кнопка предпросмотра по ГОСТ
-            OutlinedButton(
-                onClick = onPreviewWork,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Icon(imageVector = Icons.Default.Visibility, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Предпросмотр титульного листа и глав ГОСТ", fontWeight = FontWeight.Bold)
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Кнопки открытия и отправки DOCX
             if (docxPath != null) {
-                Row(
+                Button(
+                    onClick = { onOpenDocx(docxPath) },
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
+                    shape = RoundedCornerShape(6.dp)
                 ) {
-                    Button(
-                        onClick = { onOpenDocx(docxPath) },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(containerColor = StudEmerald),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.FileDownload, contentDescription = null)
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(text = "Открыть Word (.docx)", fontWeight = FontWeight.Bold)
-                    }
-                    OutlinedButton(
-                        onClick = { onShareDocx(docxPath) },
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Поделиться")
-                    }
+                    Icon(imageVector = Icons.Default.FileDownload, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(text = "Открыть готовый Word (.docx)", fontWeight = FontWeight.Bold)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
@@ -834,11 +722,9 @@ private fun DocumentResultCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Список сгенерированных разделов
             Text(
                 text = "СГЕНЕРИРОВАННЫЕ РАЗДЕЛЫ:",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = JetBrainsMonoFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -861,7 +747,7 @@ private fun SectionPreviewItem(section: WorkSection) {
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 3.dp)
-            .border(0.8.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(6.dp))
+            .border(0.8.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(4.dp))
             .clickable { expanded = !expanded }
             .padding(8.dp)
     ) {
@@ -881,7 +767,6 @@ private fun SectionPreviewItem(section: WorkSection) {
                 Text(
                     text = "${section.content.length} знаков",
                     style = MaterialTheme.typography.labelSmall.copy(
-                        fontFamily = JetBrainsMonoFontFamily,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 10.sp
                     )
@@ -944,7 +829,7 @@ private fun WorkTypeDropdown(
                         Column {
                             Text(text = type.titleRu, fontWeight = FontWeight.Bold)
                             Text(
-                                text = "Стандарт: ${type.defaultPages} стр. (${type.minPages} - ${type.maxPages} стр.) · ${type.priceSc} S-coin",
+                                text = "Стандарт: ${type.defaultPages} стр. (${type.minPages} - ${type.maxPages} стр.)",
                                 style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
                             )
                         }
@@ -969,14 +854,13 @@ private fun LlmSettingsCard(
 ) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = "КОНФИГУРАЦИЯ LLM (VIBE CODE / GEMINI / DEEPSEEK)",
                 style = MaterialTheme.typography.labelSmall.copy(
-                    fontFamily = JetBrainsMonoFontFamily,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -997,7 +881,7 @@ private fun LlmSettingsCard(
             OutlinedTextField(
                 value = settings.model,
                 onValueChange = onModelChange,
-                label = { Text("Model ID (e.g. vibe-code-fast, gemini-2.5-flash)") },
+                label = { Text("Model ID (e.g. vibe-code-fast, gemini-1.5-flash)") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -1012,5 +896,40 @@ private fun LlmSettingsCard(
                 singleLine = true
             )
         }
+    }
+}
+
+private fun openDocxFile(context: android.content.Context, filePath: String) {
+    try {
+        val file = File(filePath)
+        if (!file.exists()) return
+
+        val uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(Intent.createChooser(intent, "Открыть Word документ"))
+    } catch (e: Exception) {
+        try {
+            val file = File(filePath)
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                file
+            )
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(Intent.createChooser(shareIntent, "Поделиться документом"))
+        } catch (_: Exception) {}
     }
 }

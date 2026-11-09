@@ -14,7 +14,6 @@ class SupportRepository(
     private val apiService: StudToolApiService,
     private val sessionManager: SessionManager
 ) {
-    // Локальный кэш тикетов на случай оффлайна или локального режима
     private val localTickets = mutableListOf<SupportTicketDto>()
 
     suspend fun createTicket(
@@ -40,7 +39,6 @@ class SupportRepository(
             if (response.status == "success" && response.ticketId != null) {
                 Result.success(response.ticketId)
             } else {
-                val err = response.error ?: response.message ?: "Ошибка создания обращения"
                 fallbackLocalTicket(userId, category, subject, message, workId)
             }
         } catch (e: Exception) {
@@ -48,6 +46,20 @@ class SupportRepository(
             fallbackLocalTicket(userId, category, subject, message, workId)
         }
     }
+
+    suspend fun createTicket(
+        category: String,
+        subject: String,
+        message: String,
+        contact: String?,
+        workId: Long?
+    ): Result<Long> = createTicket(
+        category = SupportCategory.fromCode(category),
+        subject = subject,
+        message = message,
+        workId = workId,
+        contactEmail = contact
+    )
 
     private fun fallbackLocalTicket(
         userId: Long,
@@ -65,7 +77,7 @@ class SupportRepository(
             message = message,
             status = "open",
             adminReply = null,
-            refundedAmount = if (category == SupportCategory.REFUND) 480 else null,
+            refundedAmount = null,
             createdAt = "Сегодня"
         )
         localTickets.add(0, ticket)

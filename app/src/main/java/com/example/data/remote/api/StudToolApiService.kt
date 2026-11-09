@@ -1,29 +1,30 @@
 package com.example.data.remote.api
 
-import com.example.data.remote.dto.BaseApiResponse
-import com.example.data.remote.dto.CheckDeviceRequest
-import com.example.data.remote.dto.CheckDeviceResponse
+import com.example.data.remote.dto.ChangePasswordRequest
+import com.example.data.remote.dto.ChangePasswordResponse
 import com.example.data.remote.dto.CheckPromocodeRequest
 import com.example.data.remote.dto.CheckPromocodeResponse
 import com.example.data.remote.dto.CreateDepositRequest
 import com.example.data.remote.dto.CreateDepositResponse
 import com.example.data.remote.dto.CreatePasswordResetRequest
 import com.example.data.remote.dto.CreatePasswordResetResponse
+import com.example.data.remote.dto.CreateSubscriptionOrderRequest
+import com.example.data.remote.dto.CreateSubscriptionOrderResponse
 import com.example.data.remote.dto.CreateSupportTicketRequest
 import com.example.data.remote.dto.CreateSupportTicketResponse
-import com.example.data.remote.dto.CreateWorkRequest
-import com.example.data.remote.dto.CreateWorkResponse
-import com.example.data.remote.dto.GetUserRequest
-import com.example.data.remote.dto.GetUserResponse
+import com.example.data.remote.dto.GetSubscriptionStatusRequest
 import com.example.data.remote.dto.MyDepositsRequest
 import com.example.data.remote.dto.MyDepositsResponse
+import com.example.data.remote.dto.MySubscriptionsRequest
+import com.example.data.remote.dto.MySubscriptionsResponse
 import com.example.data.remote.dto.MySupportTicketsRequest
 import com.example.data.remote.dto.MySupportTicketsResponse
 import com.example.data.remote.dto.PaymentInfoResponse
 import com.example.data.remote.dto.RegisterPushTokenRequest
-import com.example.data.remote.dto.RegisterRequest
-import com.example.data.remote.dto.RegisterResponse
-import com.example.data.remote.dto.UpdateProfileRequest
+import com.example.data.remote.dto.RegisterPushTokenResponse
+import com.example.data.remote.dto.SubscriptionStatusResponse
+import com.example.data.remote.dto.UnregisterPushTokenRequest
+import com.example.data.remote.dto.UnregisterPushTokenResponse
 import com.example.data.remote.dto.WorkPricesResponse
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -31,74 +32,73 @@ import retrofit2.http.POST
 
 interface StudToolApiService {
 
-    @POST("api/support_create.php")
+    // Подписки (Этап 2.4)
+    @POST("admin/api.php?action=get_subscription_status")
+    suspend fun getSubscriptionStatus(
+        @Body request: GetSubscriptionStatusRequest
+    ): SubscriptionStatusResponse
+
+    @POST("admin/api.php?action=create_subscription_order")
+    suspend fun createSubscriptionOrder(
+        @Body request: CreateSubscriptionOrderRequest
+    ): CreateSubscriptionOrderResponse
+
+    @POST("admin/api.php?action=my_subscriptions")
+    suspend fun getMySubscriptions(
+        @Body request: MySubscriptionsRequest
+    ): MySubscriptionsResponse
+
+    // Поддержка
+    @POST("admin/api.php?action=create_support_ticket")
     suspend fun createSupportTicket(
         @Body request: CreateSupportTicketRequest
     ): CreateSupportTicketResponse
 
-    @POST("api/support_my.php")
+    @POST("admin/api.php?action=my_support_tickets")
     suspend fun getMySupportTickets(
         @Body request: MySupportTicketsRequest
     ): MySupportTicketsResponse
 
-    @GET("api/payment_info.php")
-    suspend fun getPaymentInfo(): PaymentInfoResponse = PaymentInfoResponse()
+    // Профиль и безопасность
+    @POST("admin/api.php?action=change_password")
+    suspend fun changePassword(
+        @Body request: ChangePasswordRequest
+    ): ChangePasswordResponse
 
-    @GET("api/work_prices.php")
-    suspend fun getWorkPrices(): WorkPricesResponse = WorkPricesResponse()
-
-    @POST("api/check_promocode.php")
-    suspend fun checkPromocode(
-        @Body request: CheckPromocodeRequest
-    ): CheckPromocodeResponse = CheckPromocodeResponse(valid = false)
-
-    @POST("api/create_deposit.php")
-    suspend fun createDeposit(
-        @Body request: CreateDepositRequest
-    ): CreateDepositResponse = CreateDepositResponse(
-        success = true,
-        requestId = System.currentTimeMillis() % 100000L,
-        eskoinsAmount = (request.amountRub * 1.2).toInt(),
-        finalAmountRub = request.amountRub
-    )
-
-    @POST("api/my_deposits.php")
-    suspend fun getMyDeposits(
-        @Body request: MyDepositsRequest
-    ): MyDepositsResponse = MyDepositsResponse()
-
-    @POST("api/check_device.php")
-    suspend fun checkDevice(
-        @Body request: CheckDeviceRequest
-    ): CheckDeviceResponse = CheckDeviceResponse(registered = false)
-
-    @POST("api/register.php")
-    suspend fun registerUser(
-        @Body request: RegisterRequest
-    ): RegisterResponse = RegisterResponse(success = true, userId = 1L, eskoins = 200)
-
-    @POST("api/get_user.php")
-    suspend fun getUser(
-        @Body request: GetUserRequest
-    ): GetUserResponse = GetUserResponse(userId = request.userId, eskoins = 1500)
-
-    @POST("api/create_work.php")
-    suspend fun createWork(
-        @Body request: CreateWorkRequest
-    ): CreateWorkResponse = CreateWorkResponse(success = true, workId = System.currentTimeMillis())
-
-    @POST("api/update_profile.php")
-    suspend fun updateProfile(
-        @Body request: UpdateProfileRequest
-    ): BaseApiResponse = BaseApiResponse(status = "success")
-
-    @POST("api/password_reset.php")
+    @POST("admin/api.php?action=create_password_reset")
     suspend fun createPasswordReset(
         @Body request: CreatePasswordResetRequest
-    ): CreatePasswordResetResponse = CreatePasswordResetResponse(success = true, message = "Заявка принята")
+    ): CreatePasswordResetResponse
 
-    @POST("api/push_token.php")
+    @POST("admin/api.php?action=register_push_token")
     suspend fun registerPushToken(
         @Body request: RegisterPushTokenRequest
-    ): BaseApiResponse = BaseApiResponse(status = "success")
+    ): RegisterPushTokenResponse
+
+    @POST("admin/api.php?action=unregister_push_token")
+    suspend fun unregisterPushToken(
+        @Body request: UnregisterPushTokenRequest
+    ): UnregisterPushTokenResponse
+
+    // Устаревшие эндпоинты (оставлены для обратной совместимости репозиториев)
+    @GET("admin/api.php?action=payment_info")
+    suspend fun getPaymentInfo(): PaymentInfoResponse
+
+    @GET("admin/api.php?action=work_prices")
+    suspend fun getWorkPrices(): WorkPricesResponse
+
+    @POST("admin/api.php?action=create_deposit")
+    suspend fun createDeposit(
+        @Body request: CreateDepositRequest
+    ): CreateDepositResponse
+
+    @POST("admin/api.php?action=my_deposits")
+    suspend fun getMyDeposits(
+        @Body request: MyDepositsRequest
+    ): MyDepositsResponse
+
+    @POST("admin/api.php?action=check_promocode")
+    suspend fun checkPromocode(
+        @Body request: CheckPromocodeRequest
+    ): CheckPromocodeResponse
 }

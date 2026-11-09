@@ -1,6 +1,7 @@
 package com.example.data.repository
 
 import com.example.data.local.security.SessionManager
+import com.example.data.remote.llm.VibeCodeApiClient
 import com.example.domain.model.LlmSettings
 import com.example.domain.repository.SettingsRepository
 import kotlinx.coroutines.flow.Flow
@@ -12,34 +13,59 @@ class SettingsRepositoryImpl(
     private val sessionManager: SessionManager
 ) : SettingsRepository {
 
-    private val settingsFlow = MutableStateFlow(sessionManager.getLlmSettings())
-    private val _themeMode = MutableStateFlow(sessionManager.getThemeMode())
-    private val _appLanguage = MutableStateFlow(sessionManager.getAppLanguage())
-    private val _hasSeenTour = MutableStateFlow(sessionManager.hasSeenTour())
+    private val settingsState = MutableStateFlow(sessionManager.getLlmSettings())
 
-    override val themeMode: StateFlow<String> = _themeMode.asStateFlow()
-    override val appLanguage: StateFlow<String> = _appLanguage.asStateFlow()
-    override val hasSeenTour: StateFlow<Boolean> = _hasSeenTour.asStateFlow()
+    private val _endpointFlow = MutableStateFlow(settingsState.value.endpoint)
+    override val endpointFlow: StateFlow<String> = _endpointFlow.asStateFlow()
 
-    override fun getLlmSettings(): Flow<LlmSettings> = settingsFlow.asStateFlow()
+    private val _apiKeyFlow = MutableStateFlow(settingsState.value.apiKey)
+    override val apiKeyFlow: StateFlow<String> = _apiKeyFlow.asStateFlow()
+
+    private val _modelFlow = MutableStateFlow(settingsState.value.model)
+    override val modelFlow: StateFlow<String> = _modelFlow.asStateFlow()
+
+    private val _timeoutFlow = MutableStateFlow(settingsState.value.timeout.toInt())
+    override val timeoutFlow: StateFlow<Int> = _timeoutFlow.asStateFlow()
+
+    override fun getLlmSettings(): Flow<LlmSettings> = settingsState.asStateFlow()
 
     override suspend fun saveLlmSettings(settings: LlmSettings) {
-        sessionManager.saveLlmSettings(settings)
-        settingsFlow.value = settings
+        val normalizedEndpoint = VibeCodeApiClient.normalizeEndpoint(settings.endpoint)
+        val clampedTimeout = settings.timeout.coerceIn(10L, 300L)
+        val normalized = settings.copy(
+            endpoint = normalizedEndpoint,
+            timeout = clampedTimeout
+        )
+        sessionManager.saveLlmSettings(normalized)
+        settingsState.value = normalized
+        _endpointFlow.value = normalized.endpoint
+        _apiKeyFlow.value = normalized.apiKey
+        _modelFlow.value = normalized.model
+        _timeoutFlow.value = normalized.timeout.toInt()
     }
 
-    override fun setThemeMode(mode: String) {
-        sessionManager.saveThemeMode(mode)
-        _themeMode.value = mode
-    }
+    override fun getEndpoint(): String = VibeCodeApiClient.normalizeEndpoint(settingsState.value.endpoint)
 
-    override fun setAppLanguage(lang: String) {
-        sessionManager.saveAppLanguage(lang)
-        _appLanguage.value = lang
-    }
+    override fun getApiKey(): String = settingsState.value.apiKey
 
-    override fun setHasSeenTour(seen: Boolean) {
-        sessionManager.setHasSeenTour(seen)
-        _hasSeenTour.value = seen
+    override fun getModel(): String = settingsState.value.model
+
+    override fun getTimeout(): Int = settingsState.value.timeout.toInt().coerceIn(10, 300)
+
+    override fun saveSettings(endpoint: String, apiKey: String, model: String, timeout: Int) {
+        val normalizedEndpoint = VibeCodeApiClient.normalizeEndpoint(endpoint)
+        val clampedTimeout = timeout.coerceIn(10, 300).toLong()
+        val updated = settingsState.value.copy(
+            endpoint = normalizedEndpoint,
+            apiKey = apiKey.trim(),
+            model = model.trim().ifEmpty { "vibe-code-pro-flash" },
+            timeout = clampedTimeout
+        )
+        sessionManager.saveLlmSettings(updated)
+        settingsState.value = updated
+        _endpointFlow.value = updated.endpoint
+        _apiKeyFlow.value = updated.apiKey
+        _modelFlow.value = updated.model
+        _timeoutFlow.value = updated.timeout.toInt()
     }
 }

@@ -12,22 +12,24 @@ class ProfileRepositoryImpl(
     private val sessionManager: SessionManager
 ) : ProfileRepository {
 
-    private val _currentUserFlow = MutableStateFlow(getCurrentUser())
+    private val _currentUserFlow = MutableStateFlow(loadUserFromSession())
     override val currentUserFlow: StateFlow<User> = _currentUserFlow.asStateFlow()
 
-    override fun getCurrentUser(): User {
+    private fun loadUserFromSession(): User {
         return User(
             id = sessionManager.getUserId(),
             fullName = sessionManager.getUserName(),
             email = sessionManager.getUserEmail(),
-            balanceSc = sessionManager.getCoinBalance()
+            balanceSc = 0
         )
     }
 
-    override suspend fun refreshUser(): User {
-        val user = getCurrentUser()
+    override fun getCurrentUser(): User = _currentUserFlow.value
+
+    override suspend fun refreshUser(userId: Long): Result<User> {
+        val user = loadUserFromSession()
         _currentUserFlow.value = user
-        return user
+        return Result.success(user)
     }
 
     override suspend fun getProfile(): Result<UserProfileDto> {
@@ -37,7 +39,7 @@ class ProfileRepositoryImpl(
             email = sessionManager.getUserEmail(),
             university = "Московский государственный университет",
             faculty = "Факультет прикладной математики",
-            coinBalance = sessionManager.getCoinBalance()
+            coinBalance = 0
         )
         return Result.success(profile)
     }
@@ -45,15 +47,24 @@ class ProfileRepositoryImpl(
     override suspend fun updateProfile(name: String, email: String, university: String?): Result<Unit> {
         sessionManager.saveUserName(name)
         sessionManager.saveUserEmail(email)
-        _currentUserFlow.value = getCurrentUser()
+        _currentUserFlow.value = loadUserFromSession()
         return Result.success(Unit)
     }
 
+    override suspend fun updateProfile(userId: Long, fullName: String, email: String): Result<Boolean> {
+        sessionManager.saveUserName(fullName)
+        sessionManager.saveUserEmail(email)
+        _currentUserFlow.value = loadUserFromSession()
+        return Result.success(true)
+    }
+
     override suspend fun registerPushToken(token: String): Result<Unit> {
+        sessionManager.savePushToken(token)
         return Result.success(Unit)
     }
 
     override suspend fun logout() {
         sessionManager.logout()
+        _currentUserFlow.value = loadUserFromSession()
     }
 }

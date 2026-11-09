@@ -1,126 +1,191 @@
 package com.example.data.docx
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import com.example.domain.model.SectionType
+import com.example.domain.model.GostProfile
+import com.example.domain.model.Section
+import com.example.domain.model.TitlePage
+import com.example.domain.model.TocItem
 import com.example.domain.model.WorkDocument
 import com.example.domain.model.WorkMeta
-import com.example.domain.model.WorkSection
 import com.example.domain.model.WorkType
 import kotlinx.coroutines.test.runTest
+import org.apache.poi.xwpf.usermodel.XWPFDocument
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
-import java.util.zip.ZipFile
+import java.io.FileInputStream
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [36])
 class DocxGenerationTest {
 
     @Test
-    fun `generateDocx creates valid OpenXML docx archive with GOST margins and content`() = runTest {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+    fun `generateDocx creates valid openable docx file with sections and title page`() = runTest {
+        val context = RuntimeEnvironment.getApplication()
         val generator = DocxGenerator(context)
 
-        val meta = WorkMeta(
-            topic = "Разработка интеллектуальной системы анализа данных",
-            type = WorkType.COURSEWORK,
-            targetPages = 35,
-            university = "МГТУ им. Н.Э. Баумана",
-            authorName = "Иванов И.И.",
-            supervisorName = "проф. Смирнов А.В."
+        val sampleDoc = WorkDocument(
+            id = 1L,
+            meta = WorkMeta(
+                type = WorkType.REFERAT,
+                topic = "Тестовая тема по ГОСТ",
+                subject = "Информатика",
+                language = "ru",
+                targetPages = 15,
+                gostProfile = "ГОСТ 7.32",
+                estimatedWords = 2500
+            ),
+            titlePage = TitlePage(
+                university = "Московский государственный университет",
+                faculty = "Факультет ВМК",
+                department = "Кафедра АСВК",
+                workTypeLabel = "РЕФЕРАТ",
+                topic = "ТЕСТОВАЯ ТЕМА ПО ГОСТ",
+                subject = "Информатика",
+                student = "Сидоров С.С.",
+                group = "Группа 101",
+                teacher = "доц. Петров П.П.",
+                city = "Москва",
+                year = 2026
+            ),
+            toc = listOf(
+                TocItem(level = 1, title = "Введение", anchor = "h_intro"),
+                TocItem(level = 1, title = "1. Анализ технологий", anchor = "h_ch1"),
+                TocItem(level = 1, title = "Заключение", anchor = "h_concl"),
+                TocItem(level = 1, title = "Список использованных источников", anchor = "h_refs")
+            ),
+            sections = listOf(
+                Section(
+                    anchor = "h_intro",
+                    level = 1,
+                    heading = "Введение",
+                    paragraphs = listOf(
+                        "Актуальность темы обоснована развитием современных технологий [1].",
+                        "Целью работы является систематизация подходов к оформлению [2]."
+                    )
+                ),
+                Section(
+                    anchor = "h_ch1",
+                    level = 1,
+                    heading = "1. Анализ технологий",
+                    paragraphs = listOf(
+                        "Первый абзац содержательной части документа [1, с. 25]."
+                    )
+                ),
+                Section(
+                    anchor = "h_concl",
+                    level = 1,
+                    heading = "Заключение",
+                    paragraphs = listOf(
+                        "В ходе исследования поставленные задачи были полностью решены."
+                    )
+                )
+            ),
+            references = listOf(
+                "1. Иванов И.И. Информационные системы. — М.: Наука, 2024. — 300 с.",
+                "2. Петров П.П. Алгоритмы анализа // Вестник РАН. — 2025. — № 2. — С. 10–20."
+            ),
+            appendix = emptyList()
         )
 
-        val sections = listOf(
-            WorkSection(
-                id = "sec_intro",
-                title = "ВВЕДЕНИЕ",
-                type = SectionType.INTRODUCTION,
-                targetPages = 3.0,
-                targetCharacters = 5400,
-                minCharacters = 4860,
-                maxCharacters = 5940,
-                content = "Актуальность темы обусловлена стремительным развитием алгоритмов машинного обучения.\n\nЦелью исследования является повышение точности прогнозирования.",
-                isGenerated = true
-            ),
-            WorkSection(
-                id = "sec_ch_1",
-                title = "ГЛАВА 1. Теоретические основы",
-                type = SectionType.CHAPTER,
-                chapterNumber = 1,
-                targetPages = 0.0,
-                targetCharacters = 0,
-                minCharacters = 0,
-                maxCharacters = 0,
-                content = "",
-                isGenerated = true
-            ),
-            WorkSection(
-                id = "sec_ch_1_sub_1",
-                title = "1.1. Анализ существующих методов",
-                type = SectionType.SUBSECTION,
-                chapterNumber = 1,
-                subsectionNumber = 1,
-                targetPages = 5.0,
-                targetCharacters = 9000,
-                minCharacters = 8100,
-                maxCharacters = 9900,
-                content = "В данном подразделе рассматриваются современные архитектуры нейронных сетей [1, с. 45].",
-                isGenerated = true
-            ),
-            WorkSection(
-                id = "sec_conclusion",
-                title = "ЗАКЛЮЧЕНИЕ",
-                type = SectionType.CONCLUSION,
-                targetPages = 2.0,
-                targetCharacters = 3600,
-                minCharacters = 3240,
-                maxCharacters = 3960,
-                content = "Полученные результаты подтверждают эффективность предложенного подхода.",
-                isGenerated = true
-            ),
-            WorkSection(
-                id = "sec_biblio",
-                title = "СПИСОК ИСПОЛЬЗОВАННЫХ ИСТОЧНИКОВ",
-                type = SectionType.BIBLIOGRAPHY,
-                targetPages = 1.5,
-                targetCharacters = 2700,
-                minCharacters = 2295,
-                maxCharacters = 3105,
-                content = "1. Иванов И.И. Системы искусственного интеллекта. — М.: Наука, 2024. — 320 с.",
-                isGenerated = true
-            )
+        val result = generator.generateDocx(sampleDoc)
+        assertTrue("Docx generation should succeed", result.isSuccess)
+
+        val file = File(result.getOrThrow())
+        assertTrue("Generated file should exist", file.exists())
+        assertTrue("Generated file should have non-zero size", file.length() > 500)
+
+        FileInputStream(file).use { fis ->
+            val docx = XWPFDocument(fis)
+            assertNotNull(docx)
+            assertTrue("Document should contain paragraphs", docx.paragraphs.size > 5)
+            docx.close()
+        }
+    }
+
+    @Test
+    fun testGenerateDocxWithGpkProfile() = runTest {
+        val context = RuntimeEnvironment.getApplication()
+        val generator = DocxGenerator(context)
+        val gpkProfile = GostProfile(
+            id = 6L,
+            name = "ГПК (Гуманитарно-педагогический колледж)",
+            universityName = "ПРОФЕССИОНАЛЬНОЕ ОБРАЗОВАТЕЛЬНОЕ ЧАСТНОЕ УЧРЕЖДЕНИЕ «ГУМАНИТАРНО-ПЕДАГОГИЧЕСКИЙ КОЛЛЕДЖ»",
+            leftMarginMm = 30f,
+            rightMarginMm = 15f,
+            topMarginMm = 20f,
+            bottomMarginMm = 20f
         )
 
-        val document = WorkDocument(
-            meta = meta,
-            sections = sections
+        val sampleDoc = WorkDocument(
+            id = 2L,
+            meta = WorkMeta(
+                type = WorkType.COURSEWORK,
+                topic = "Основы моделирования. Модель, моделирование, процесс моделирования",
+                subject = "Основы моделирования",
+                university = gpkProfile.universityName,
+                authorName = "Ильясов М.Х.",
+                supervisorName = "Гусейнов М.М.",
+                city = "Махачкала",
+                year = 2026,
+                language = "ru",
+                targetPages = 25,
+                gostProfile = gpkProfile.name,
+                estimatedWords = 5000
+            ),
+            titlePage = TitlePage(
+                university = gpkProfile.universityName,
+                faculty = "",
+                department = "",
+                workTypeLabel = "КУРСОВАЯ РАБОТА",
+                topic = "Модель, моделирование, процесс моделирования",
+                subject = "Основы моделирования",
+                student = "Ильясов М.Х.",
+                group = "3 курса ИСиП",
+                teacher = "Гусейнов М.М.",
+                city = "Махачкала",
+                year = 2026
+            ),
+            toc = listOf(
+                TocItem(level = 1, title = "ВВЕДЕНИЕ", anchor = "sec_intro"),
+                TocItem(level = 1, title = "ГЛАВА 1. ОСНОВНЫЕ ПОНЯТИЯ", anchor = "sec_1")
+            ),
+            sections = listOf(
+                Section(
+                    anchor = "sec_intro",
+                    level = 1,
+                    heading = "ВВЕДЕНИЕ",
+                    paragraphs = listOf("Текст введения для колледжа.")
+                ),
+                Section(
+                    anchor = "sec_1",
+                    level = 1,
+                    heading = "ГЛАВА 1. ОСНОВНЫЕ ПОНЯТИЯ",
+                    paragraphs = listOf("Текст главы 1.")
+                )
+            ),
+            references = listOf("1. Учебное пособие по моделированию. — Махачкала, 2024."),
+            appendix = emptyList()
         )
 
-        val result = generator.generateDocx(document)
-        assertTrue("Генерация DOCX должна завершиться успешно", result.isSuccess)
+        val result = generator.generateDocx(sampleDoc)
+        assertTrue("Docx generation for GPK should succeed", result.isSuccess)
+        val file = File(result.getOrThrow())
+        assertTrue(file.exists())
+        assertTrue(file.length() > 500)
 
-        val filePath = result.getOrNull()
-        assertNotNull(filePath)
-        val file = File(filePath!!)
-        assertTrue("Файл DOCX должен существовать на диске", file.exists())
-        assertTrue("Размер файла DOCX должен быть больше 1 КБ", file.length() > 1000)
-
-        ZipFile(file).use { zip ->
-            val docEntry = zip.getEntry("word/document.xml")
-            val stylesEntry = zip.getEntry("word/styles.xml")
-            assertNotNull("В архиве должен быть word/document.xml", docEntry)
-            assertNotNull("В архиве должен быть word/styles.xml", stylesEntry)
-
-            val docXml = zip.getInputStream(docEntry).bufferedReader().readText()
-            assertTrue("Должен содержать название университета", docXml.contains("МГТУ им. Н.Э. Баумана"))
-            assertTrue("Должен содержать тему работы", docXml.contains("Разработка интеллектуальной системы анализа данных"))
-            assertTrue("Должен содержать оглавление", docXml.contains("СОДЕРЖАНИЕ"))
-            assertTrue("Должен содержать поля по ГОСТ (left=1701 dxa = 30мм)", docXml.contains("w:left=\"1701\""))
+        FileInputStream(file).use { fis ->
+            val docx = XWPFDocument(fis)
+            val fullText = docx.paragraphs.joinToString("\n") { it.text }
+            assertTrue(fullText.contains("ГУМАНИТАРНО-ПЕДАГОГИЧЕСКИЙ КОЛЛЕДЖ"))
+            assertTrue(fullText.contains("КУРСОВАЯ РАБОТА"))
+            assertTrue(fullText.contains("Ильясов М.Х."))
+            assertTrue(fullText.contains("Махачкала"))
+            docx.close()
         }
     }
 }

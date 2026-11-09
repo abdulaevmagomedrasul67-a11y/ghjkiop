@@ -40,14 +40,14 @@ object SectionQuantizer {
         val paragraphsPerChapter: Int
 
         when (meta.type) {
-            WorkType.ESSAY_REFERAT -> {
+            WorkType.ESSAY_REFERAT, WorkType.REFERAT, WorkType.CONTROL_WORK -> {
                 introShare = 0.08
                 conclusionShare = 0.06
                 biblioShare = 0.04
                 numChapters = 2
                 paragraphsPerChapter = 2
             }
-            WorkType.SCIENTIFIC_ARTICLE -> {
+            WorkType.SCIENTIFIC_ARTICLE, WorkType.REPORT, WorkType.ESSAY -> {
                 introShare = 0.12
                 conclusionShare = 0.10
                 biblioShare = 0.08

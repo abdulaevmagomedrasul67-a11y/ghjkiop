@@ -11,12 +11,21 @@ data class RegisterPushTokenRequest(
 )
 
 @JsonClass(generateAdapter = true)
-data class UnregisterPushTokenRequest(
-    @Json(name = "user_id") val userId: Long
+data class RegisterPushTokenResponse(
+    @Json(name = "success") val success: Boolean? = true,
+    @Json(name = "status") val status: String? = "ok",
+    @Json(name = "error") val error: String? = null
 )
 
 @JsonClass(generateAdapter = true)
-data class PushTokenResponse(
+data class UnregisterPushTokenRequest(
+    @Json(name = "user_id") val userId: Long,
+    @Json(name = "push_token") val pushToken: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class UnregisterPushTokenResponse(
     @Json(name = "success") val success: Boolean? = true,
+    @Json(name = "status") val status: String? = "ok",
     @Json(name = "error") val error: String? = null
 )

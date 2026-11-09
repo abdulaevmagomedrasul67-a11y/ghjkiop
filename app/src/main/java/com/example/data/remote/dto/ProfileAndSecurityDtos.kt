@@ -22,23 +22,21 @@ data class UpdateProfileRequest(
 )
 
 @JsonClass(generateAdapter = true)
-data class BaseApiResponse(
-    @Json(name = "status") val status: String? = null,
-    @Json(name = "message") val message: String? = null,
-    @Json(name = "error") val error: String? = null
-) {
-    val success: Boolean get() = status == "success" || error == null
-}
-
-@JsonClass(generateAdapter = true)
 data class ChangePasswordRequest(
     @Json(name = "user_id") val userId: Long,
-    @Json(name = "password") val password: String
+    @Json(name = "password") val password: String,
+    @Json(name = "action") val action: String = "change_password"
 )
 
 @JsonClass(generateAdapter = true)
 data class ChangePasswordResponse(
     @Json(name = "success") val success: Boolean = true,
+    @Json(name = "error") val error: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BaseApiResponse(
+    @Json(name = "status") val status: String,
     @Json(name = "message") val message: String? = null,
     @Json(name = "error") val error: String? = null
 )

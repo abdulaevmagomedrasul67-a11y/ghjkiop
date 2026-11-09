@@ -3,33 +3,49 @@ package com.example.domain.model
 enum class SupportCategory(
     val code: String,
     val titleRu: String,
-    val descriptionRu: String
+    val descriptionRu: String,
+    val icon: String = "•",
+    val hint: String = "Опишите ваш вопрос подробно..."
 ) {
     REFUND(
         code = "refund",
-        titleRu = "Возврат коинов",
-        descriptionRu = "Работа не сгенерировалась, а S-coin списались с баланса"
+        titleRu = "Подписка и оплата",
+        descriptionRu = "Вопросы по активации подписки, продлению или возврату средств",
+        icon = "₽",
+        hint = "Укажите дату перевода и выбранный тариф подписки..."
     ),
     PASSWORD(
         code = "password",
         titleRu = "Забыл пароль",
-        descriptionRu = "Потерян доступ к аккаунту или привязанной почте"
+        descriptionRu = "Потерян доступ к аккаунту или привязанной почте",
+        icon = "🔑",
+        hint = "Укажите логин или почту вашего аккаунта..."
     ),
     BUG(
         code = "bug",
         titleRu = "Нашёл ошибку",
-        descriptionRu = "Приложение работает некорректно или зависает"
+        descriptionRu = "Приложение работает некорректно или зависает",
+        icon = "⚙",
+        hint = "Опишите, на каком этапе возникла ошибка..."
     ),
     QUESTION(
         code = "question",
         titleRu = "Вопрос",
-        descriptionRu = "Не понимаю, как работает генератор, форматирование или тарифы"
+        descriptionRu = "Не понимаю, как работает генератор, форматирование или тарифы",
+        icon = "?",
+        hint = "Задайте ваш вопрос в свободной форме..."
     ),
     OTHER(
         code = "other",
         titleRu = "Другое",
-        descriptionRu = "Индивидуальный вопрос в свободной форме"
+        descriptionRu = "Индивидуальный вопрос в свободной форме",
+        icon = "✉",
+        hint = "Опишите вашу ситуацию..."
     );
+
+    val value: String get() = code
+    val label: String get() = titleRu
+    val subtitle: String get() = descriptionRu
 
     companion object {
         fun fromCode(code: String): SupportCategory =
@@ -37,13 +53,11 @@ enum class SupportCategory(
     }
 }
 
-data class SupportCategoryItem(val value: String, val label: String, val description: String)
-
 object SupportCategories {
-    val all: List<SupportCategoryItem> = SupportCategory.entries.map {
-        SupportCategoryItem(value = it.code, label = it.titleRu, description = it.descriptionRu)
-    }
+    val ALL: List<SupportCategory> = SupportCategory.entries
 
-    fun findByValue(value: String): SupportCategoryItem? =
-        all.firstOrNull { it.value.equals(value, ignoreCase = true) }
+    fun findByValue(value: String): SupportCategory? =
+        SupportCategory.entries.firstOrNull {
+            it.code.equals(value, ignoreCase = true) || it.name.equals(value, ignoreCase = true)
+        }
 }

@@ -5,8 +5,10 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.example.data.local.dao.GenerationSessionDao
 import com.example.data.local.dao.UniversityProfileDao
 import com.example.data.local.dao.WorkDao
+import com.example.data.local.entity.GenerationSession
 import com.example.data.local.entity.UniversityProfileEntity
 import com.example.data.local.entity.WorkEntity
 import kotlinx.coroutines.CoroutineScope
@@ -19,15 +21,17 @@ import kotlinx.coroutines.launch
 @Database(
     entities = [
         UniversityProfileEntity::class,
-        WorkEntity::class
+        WorkEntity::class,
+        GenerationSession::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun universityProfileDao(): UniversityProfileDao
     abstract fun workDao(): WorkDao
+    abstract fun generationSessionDao(): GenerationSessionDao
 
     companion object {
         @Volatile

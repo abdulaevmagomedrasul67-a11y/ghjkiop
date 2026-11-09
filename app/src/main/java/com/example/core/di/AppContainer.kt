@@ -3,19 +3,18 @@ package com.example.core.di
 import android.content.Context
 import com.example.data.docx.DocxGenerator
 import com.example.data.local.AppDatabase
-import com.example.data.local.security.PinManager
+import com.example.data.local.dao.GenerationSessionDao
 import com.example.data.local.security.SessionManager
-import com.example.data.remote.LlmConnectionChecker
 import com.example.data.remote.api.ApiClient
 import com.example.data.remote.api.StudToolApiService
 import com.example.data.remote.llm.VibeCodeApiClient
 import com.example.data.repository.AuthRepositoryImpl
 import com.example.data.repository.CoinRepositoryImpl
-import com.example.data.repository.DepositRepository
 import com.example.data.repository.HistoryRepositoryImpl
 import com.example.data.repository.LlmRepositoryImpl
 import com.example.data.repository.ProfileRepositoryImpl
 import com.example.data.repository.SettingsRepositoryImpl
+import com.example.data.repository.SubscriptionRepositoryImpl
 import com.example.data.repository.SupportRepository
 import com.example.data.repository.UniversityProfileRepositoryImpl
 import com.example.data.repository.WorkRepositoryImpl
@@ -26,6 +25,7 @@ import com.example.domain.repository.HistoryRepository
 import com.example.domain.repository.LlmRepository
 import com.example.domain.repository.ProfileRepository
 import com.example.domain.repository.SettingsRepository
+import com.example.domain.repository.SubscriptionRepository
 import com.example.domain.repository.UniversityProfileRepository
 import com.example.domain.repository.WorkRepository
 import com.example.domain.usecase.BuildDocxUseCase
@@ -35,28 +35,24 @@ import com.example.domain.usecase.GetMySupportTicketsUseCase
 
 class AppContainer(private val context: Context) {
 
+    val database: AppDatabase by lazy {
+        AppDatabase.getInstance(context.applicationContext)
+    }
+
+    val generationSessionDao: GenerationSessionDao by lazy {
+        database.generationSessionDao()
+    }
+
     val sessionManager: SessionManager by lazy {
         SessionManager(context.applicationContext)
-    }
-
-    val pinManager: PinManager by lazy {
-        PinManager(context.applicationContext)
-    }
-
-    val appDatabase: AppDatabase by lazy {
-        AppDatabase.getInstance(context.applicationContext)
     }
 
     val apiService: StudToolApiService by lazy {
         ApiClient.apiService
     }
 
-    val depositRepository: DepositRepository by lazy {
-        DepositRepository(apiService, sessionManager)
-    }
-
-    val llmConnectionChecker: LlmConnectionChecker by lazy {
-        LlmConnectionChecker()
+    val subscriptionRepository: SubscriptionRepository by lazy {
+        SubscriptionRepositoryImpl(apiService, sessionManager)
     }
 
     val supportRepository: SupportRepository by lazy {
@@ -120,6 +116,12 @@ class AppContainer(private val context: Context) {
     }
 
     val generateWorkUseCase: GenerateWorkUseCase by lazy {
-        GenerateWorkUseCase(sequentialGenerationController)
+        GenerateWorkUseCase(
+            llmRepository = llmRepository,
+            settingsRepository = settingsRepository,
+            profileRepository = universityProfileRepository,
+            subscriptionRepository = subscriptionRepository,
+            generationSessionDao = generationSessionDao
+        )
     }
 }

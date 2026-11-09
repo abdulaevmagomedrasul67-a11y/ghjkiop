@@ -2,36 +2,15 @@ package com.example.data.local.security
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 import java.security.MessageDigest
 
 class PinManager(context: Context) {
 
-    private val prefs: SharedPreferences = createEncryptedPrefs(context)
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("studtool_pin_prefs", Context.MODE_PRIVATE)
 
     @Volatile
     private var unlockedThisSession: Boolean = false
-
-    private fun createEncryptedPrefs(context: Context): SharedPreferences {
-        return try {
-            val masterKey = MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build()
-
-            EncryptedSharedPreferences.create(
-                context,
-                "studtool_pin_prefs",
-                masterKey,
-                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            )
-        } catch (e: Exception) {
-            Log.e("PinManager", "Failed to init EncryptedSharedPreferences, fallback to standard", e)
-            context.getSharedPreferences("studtool_pin_prefs_fallback", Context.MODE_PRIVATE)
-        }
-    }
 
     fun hasPin(): Boolean {
         return !prefs.getString(KEY_PIN_HASH, null).isNullOrEmpty()
